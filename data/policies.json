@@ -1,0 +1,19 @@
+[
+  {
+    "policy_id": "SOP-NOSHOW-001",
+    "title": "Confirmed Helper No-Show",
+    "applies_to": ["helper_no_show"],
+    "version": "1.0",
+    "rule": "For a confirmed no-show, verify check-in status, begin replacement search after 15 minutes, provide a progress update to the customer, and escalate when no eligible replacement can arrive before the customer deadline.",
+    "refund_rule": "Refunds up to INR 300 may be processed automatically. Amounts above INR 300 require operations-manager approval."
+  },
+  {
+    "policy_id": "SOP-LATE-001",
+    "title": "Helper Delay",
+    "applies_to": ["helper_late"],
+    "version": "1.0",
+    "rule": "Contact the helper, calculate expected arrival, update the customer, and begin a replacement search if the delay threatens the customer's stated deadline.",
+    "refund_rule": "Any compensation must follow the configured approval threshold."
+  }
+]
+

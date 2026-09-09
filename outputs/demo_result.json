@@ -1,0 +1,233 @@
+{
+  "case_id": "EZH-1042",
+  "status": "waiting_for_manager_approval",
+  "agent_provider": "deterministic_mock",
+  "booking_validation": {
+    "valid": true,
+    "reason": "confirmed_booking_found"
+  },
+  "operational_facts": {
+    "received_at": "2026-09-08T09:30:00+05:30",
+    "scheduled_start": "2026-09-08T09:00:00+05:30",
+    "minutes_late": 30,
+    "helper_checked_in": false,
+    "hours_to_customer_deadline": 3.5,
+    "priority": "high",
+    "priority_reason": "Confirmed no-show exceeds 15 minutes and customer deadline is within 4 hours."
+  },
+  "agent_intake": {
+    "case_type": "helper_no_show",
+    "urgency_signal": "high",
+    "customer_sentiment": "frustrated",
+    "requested_resolution": "immediate_replacement",
+    "extracted_deadline": "1 PM",
+    "summary": "Customer reports that the scheduled helper has not arrived and requests an urgent replacement.",
+    "confidence": 0.97
+  },
+  "matched_policy": {
+    "policy_id": "SOP-NOSHOW-001",
+    "title": "Confirmed Helper No-Show",
+    "applies_to": [
+      "helper_no_show"
+    ],
+    "version": "1.0",
+    "rule": "For a confirmed no-show, verify check-in status, begin replacement search after 15 minutes, provide a progress update to the customer, and escalate when no eligible replacement can arrive before the customer deadline.",
+    "refund_rule": "Refunds up to INR 300 may be processed automatically. Amounts above INR 300 require operations-manager approval."
+  },
+  "replacement_candidates": [
+    {
+      "helper_id": "HLP-2002",
+      "name": "Anjali",
+      "rating": 4.8,
+      "distance_km": 2.5,
+      "estimated_arrival": "2026-09-08T10:15:00+05:30",
+      "eligible": true,
+      "ineligibility_reasons": []
+    },
+    {
+      "helper_id": "HLP-2003",
+      "name": "Meena",
+      "rating": 4.9,
+      "distance_km": 4.0,
+      "estimated_arrival": "2026-09-08T11:09:00+05:30",
+      "eligible": true,
+      "ineligibility_reasons": []
+    },
+    {
+      "helper_id": "HLP-2004",
+      "name": "Kavya",
+      "rating": 4.7,
+      "distance_km": 1.0,
+      "estimated_arrival": "2026-09-08T09:56:00+05:30",
+      "eligible": false,
+      "ineligibility_reasons": [
+        "required_skill_missing"
+      ]
+    }
+  ],
+  "recommended_replacement": {
+    "helper_id": "HLP-2002",
+    "name": "Anjali",
+    "rating": 4.8,
+    "distance_km": 2.5,
+    "estimated_arrival": "2026-09-08T10:15:00+05:30",
+    "eligible": true,
+    "ineligibility_reasons": []
+  },
+  "recommendation_validation": {
+    "valid": true,
+    "checks": {
+      "candidate_exists": true,
+      "eligible": true,
+      "grounded_in_source_data": true
+    },
+    "reason": "Recommendation passed deterministic validation."
+  },
+  "approval_control": {
+    "requested_refund_inr": 500.0,
+    "automatic_refund_limit_inr": 300.0,
+    "approval_required": true,
+    "approval_reason": "Requested refund of INR 500 exceeds the automatic limit of INR 300."
+  },
+  "customer_messages": {
+    "progress_update": "Hi Priya, we're sorry that your scheduled helper did not arrive. We have identified an eligible replacement who could arrive around 10:15 AM. We are contacting the helper and will confirm the assignment once accepted. Your ₹500 refund request is being reviewed by our operations manager."
+  },
+  "manager_approval_request": {
+    "title": "Refund approval required — case EZH-1042",
+    "decision": "Approve or decline the requested ₹500 refund.",
+    "case_summary": "The confirmed cleaner had not checked in and was 30 minutes late. The customer had 3.5 hours remaining before the stated deadline.",
+    "replacement_summary": "Anjali is eligible and could arrive around 10:15 AM.",
+    "policy_limit": "₹300",
+    "approve_effect": "The synthetic workflow may proceed to the refund-confirmation step.",
+    "decline_effect": "The refund remains unissued and the customer receives a reviewed decline/update message.",
+    "executed": false
+  },
+  "automatic_actions": [
+    {
+      "action": "contact_replacement_helper",
+      "helper_id": "HLP-2002",
+      "status": "prepared_for_n8n",
+      "executed": false
+    },
+    {
+      "action": "send_customer_progress_update",
+      "status": "draft_prepared_not_sent",
+      "executed": false,
+      "draft": "Hi Priya, we're sorry that your scheduled helper did not arrive. We have identified an eligible replacement who could arrive around 10:15 AM. We are contacting the helper and will confirm the assignment once accepted. Your ₹500 refund request is being reviewed by our operations manager."
+    }
+  ],
+  "approval_actions": [
+    {
+      "action": "issue_refund",
+      "amount_inr": 500.0,
+      "status": "waiting_for_manager",
+      "executed": false
+    }
+  ],
+  "workflow_progress": {
+    "completed": [
+      {
+        "step": "case_received",
+        "label": "Customer case received"
+      },
+      {
+        "step": "booking_validated",
+        "label": "Booking and check-in verified"
+      },
+      {
+        "step": "priority_calculated",
+        "label": "Operational priority calculated"
+      },
+      {
+        "step": "message_classified",
+        "label": "Customer message classified by AI"
+      },
+      {
+        "step": "policy_matched",
+        "label": "Relevant no-show policy matched"
+      },
+      {
+        "step": "replacement_checked",
+        "label": "Replacement candidates checked"
+      }
+    ],
+    "waiting": [
+      {
+        "step": "replacement_acceptance",
+        "label": "Waiting to contact Anjali and receive acceptance"
+      },
+      {
+        "step": "refund_approval",
+        "label": "Waiting for manager decision on ₹500 refund"
+      }
+    ],
+    "not_executed": [
+      {
+        "action": "helper_contact",
+        "label": "No real helper has been contacted",
+        "reason": "The n8n communication workflow has not been triggered."
+      },
+      {
+        "action": "customer_message",
+        "label": "No customer message has been sent",
+        "reason": "The message is a reviewed draft only."
+      },
+      {
+        "action": "refund",
+        "label": "No refund has been issued",
+        "reason": "The synthetic refund is waiting for manager approval."
+      }
+    ],
+    "next_action": "Trigger the synthetic n8n communication workflow and collect the manager's refund decision."
+  },
+  "audit_log": [
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "case_received",
+      "status": "completed",
+      "detail": "Received case EZH-1042."
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "booking_validation",
+      "status": "completed",
+      "detail": "confirmed_booking_found"
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "fact_calculation",
+      "status": "completed",
+      "detail": "Confirmed no-show exceeds 15 minutes and customer deadline is within 4 hours."
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "agent_intake",
+      "status": "completed",
+      "detail": "deterministic_mock classified the case as helper_no_show."
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "policy_retrieval",
+      "status": "completed",
+      "detail": "SOP-NOSHOW-001"
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "replacement_validation",
+      "status": "completed",
+      "detail": "Recommendation passed deterministic validation."
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "approval_control",
+      "status": "waiting_for_approval",
+      "detail": "Requested refund of INR 500 exceeds the automatic limit of INR 300."
+    },
+    {
+      "timestamp": "2026-09-08T09:10:07-06:00",
+      "step": "case_orchestration",
+      "status": "completed",
+      "detail": "Case is waiting_for_manager_approval."
+    }
+  ]
+}

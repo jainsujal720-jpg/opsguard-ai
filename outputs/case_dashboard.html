@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpsGuard Case EZH-1042</title>
+<style>
+body{margin:0;background:#f4f6f8;color:#182230;font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1050px;margin:40px auto;padding:0 22px}h1{margin-bottom:4px}.sub{color:#667085}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0}
+.card{background:white;border:1px solid #e4e7ec;border-radius:14px;padding:20px;box-shadow:0 3px 12px #1018280d}
+.metric{font-size:26px;font-weight:700;margin-top:8px}.high{color:#b42318}.waiting{color:#b54708}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}ul{list-style:none;padding:0;margin:0}
+li{border-bottom:1px solid #eaecf0;padding:12px 0}li:last-child{border-bottom:0}small{display:block;color:#667085;margin-top:4px}
+.done li:before{content:"✓";color:#067647;font-weight:700;margin-right:10px}.pending li:before{content:"○";color:#b54708;font-weight:700;margin-right:10px}
+.notdone li:before{content:"—";color:#667085;font-weight:700;margin-right:10px}blockquote{margin:0;padding:16px;border-left:4px solid #175cd3;background:#eff8ff;border-radius:8px}
+.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff4e5;color:#b54708;font-weight:650}
+@media(max-width:720px){.cols{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<h1>OpsGuard Operations Case</h1><div class="sub">A transparent view of what is complete, waiting, and not executed</div>
+<div class="grid">
+<div class="card"><div>Case</div><div class="metric">EZH-1042</div></div>
+<div class="card"><div>Priority</div><div class="metric high">High</div></div>
+<div class="card"><div>Recommended helper</div><div class="metric">Anjali</div></div>
+<div class="card"><div>Case status</div><div class="metric waiting">Waiting</div><small>waiting for manager approval</small></div>
+</div>
+<div class="cols">
+<section class="card done"><h2>Completed</h2><ul><li><span>Customer case received</span></li><li><span>Booking and check-in verified</span></li><li><span>Operational priority calculated</span></li><li><span>Customer message classified by AI</span></li><li><span>Relevant no-show policy matched</span></li><li><span>Replacement candidates checked</span></li></ul></section>
+<section class="card pending"><h2>Waiting</h2><ul><li><span>Waiting to contact Anjali and receive acceptance</span></li><li><span>Waiting for manager decision on ₹500 refund</span></li></ul></section>
+</div>
+<section class="card notdone" style="margin-top:18px"><h2>Not executed</h2><ul><li><span>No real helper has been contacted</span><small>The n8n communication workflow has not been triggered.</small></li><li><span>No customer message has been sent</span><small>The message is a reviewed draft only.</small></li><li><span>No refund has been issued</span><small>The synthetic refund is waiting for manager approval.</small></li></ul></section>
+<section class="card" style="margin-top:18px"><h2>Customer message draft</h2><blockquote>Hi Priya, we&#x27;re sorry that your scheduled helper did not arrive. We have identified an eligible replacement who could arrive around 10:15 AM. We are contacting the helper and will confirm the assignment once accepted. Your ₹500 refund request is being reviewed by our operations manager.</blockquote><p><span class="badge">Draft only — not sent</span></p></section>
+<section class="card" style="margin-top:18px"><h2>Manager decision</h2><p><strong>Approve or decline the requested ₹500 refund.</strong></p><p>The confirmed cleaner had not checked in and was 30 minutes late. The customer had 3.5 hours remaining before the stated deadline.</p><p>Anjali is eligible and could arrive around 10:15 AM.</p><p><span class="badge">No refund issued</span></p></section>
+<section class="card" style="margin-top:18px"><h2>Next action</h2><p>Trigger the synthetic n8n communication workflow and collect the manager&#x27;s refund decision.</p></section>
+</main></body></html>

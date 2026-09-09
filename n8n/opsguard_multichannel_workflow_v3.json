@@ -1,0 +1,430 @@
+{
+  "name": "OpsGuard V3 - Email, Manager Decision and WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## OpsGuard V3 setup\n1. Select your existing **Gmail credential** in all five Gmail nodes.\n2. Select your existing **Twilio API credential** in **Send WhatsApp Trial Template**.\n3. Replace the four `REPLACE_WITH_...` values in that HTTP Request node.\n4. Keep this workflow synthetic until production credentials, approved WhatsApp templates, and delivery callbacks are configured.\n\nThe WhatsApp branch continues on error, so it cannot block the email and manager-decision path.",
+        "height": 300,
+        "width": 500,
+        "color": 5
+      },
+      "id": "c1978385-cb90-46df-8cd9-561f50e5f118",
+      "name": "V3 Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-1040, -500]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v3-multichannel-test",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1a8c0b9c-7a1a-45e3-b9b0-ea0a1df2b9a1",
+      "name": "Receive Synthetic Case Result",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-760, 0],
+      "webhookId": "53b1d5b3-fb0e-4c02-a150-2bd012ba71cb"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — We are working on case {{ $json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\n{{ $json.body.case_result.customer_messages.progress_update }}\n\nWe will send another update after the refund decision.\n\nCase ID: {{ $json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "2bb2f8b8-7d07-468e-a4f4-0d9e0de863a4",
+      "name": "Send Initial Customer Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-500, -40]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/REPLACE_WITH_ACCOUNT_SID/Messages.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "whatsapp:+REPLACE_WITH_TEST_RECIPIENT"
+            },
+            {
+              "name": "From",
+              "value": "whatsapp:+REPLACE_WITH_TWILIO_SANDBOX_NUMBER"
+            },
+            {
+              "name": "ContentSid",
+              "value": "REPLACE_WITH_TWILIO_CONTENT_SID"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ea801c1b-fcfb-46ae-95bb-39a11545ef09",
+      "name": "Send WhatsApp Trial Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-500, 320],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1b9c73e-56c9-4f42-993b-f65e94502661",
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            },
+            {
+              "id": "4078748e-cf6f-4e3a-978f-504b88a8f132",
+              "name": "test_status",
+              "value": "whatsapp_request_attempted_non_blocking",
+              "type": "string"
+            },
+            {
+              "id": "9c31f65c-9609-45c2-9545-da368bdbdbb7",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d4b588c1-d1bf-4dc5-a89a-9bcd44b08b4b",
+              "name": "delivery_note",
+              "value": "API acceptance is not final delivery; verify with a Twilio status callback or message log.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9409468a-fd20-4734-84e1-dd01d78aa15a",
+      "name": "Record WhatsApp Attempt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-240, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "3fa955b1-f513-42ca-b569-f7a6f65b68cd",
+              "leftValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c50f16e-3648-48e8-862b-3fddf19553fa",
+      "name": "Manager Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-240, -40]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "message": "=SYNTHETIC APPROVAL TEST — Clicking a button will not issue a real refund.\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.decision }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.case_summary }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.replacement_summary }}\n\nAutomatic policy limit: {{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.policy_limit }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve test refund",
+            "disapproveLabel": "Decline test refund"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4d66394d-a9c9-4435-8ff0-c2ad2b15ccbf",
+      "name": "Email Manager and Wait",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [20, -180],
+      "webhookId": "a4b605e0-e0c1-43d4-9c0f-a87d22dc8570"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "50a0c662-4645-447e-9196-7d8621a3b749",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5b5872bd-eb71-4fe2-8708-a9ecee2fdc8f",
+      "name": "Manager Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [280, -180]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund approved for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nGood news — your refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} has been approved.\n\nIn a live EzyHelpers service, the refund would now be sent to the original payment method. We would show the payment provider's confirmed completion estimate instead of leaving you uncertain.\n\nWe will continue coordinating the service resolution described in your earlier update. You do not need to take any further action right now.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "6c25c597-527c-4495-83d7-f85892430f93",
+      "name": "Send Approval Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [540, -260]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} was reviewed and was not approved.\n\nIn a live EzyHelpers service, a support specialist would explain the reason and available next steps. The service-resolution work described in your earlier update would continue separately.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "7d6fde0c-5985-46de-aa31-37ad381261c2",
+      "name": "Send Decline Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [540, -100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "84d934d3-7157-42d9-a126-91621318dd82",
+              "name": "test_status",
+              "value": "manager_approved_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "89f3181f-4ce8-44b5-b9da-6f7c4ed4f8d6",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8ee0b633-24a3-46b3-9c98-76f3a0f8d298",
+      "name": "Record Approved Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, -260]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94a66193-151a-4467-a4a6-0e5556611206",
+              "name": "test_status",
+              "value": "manager_declined_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "a606a7b5-1788-409a-bd4f-bef7eb81216e",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9fd9c80c-6ea0-458a-9da5-0719185069e5",
+      "name": "Record Declined Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, -100]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Case processed for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\nYour case has been processed automatically because it did not require manager approval. We will continue with the resolution described in your earlier update.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "a3ea2f09-6558-469b-8f25-d1d61eb1316b",
+      "name": "Send Automatic Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [20, 120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b43077d5-0fd5-405c-bc3c-b7f5c0b55c92",
+              "name": "test_status",
+              "value": "automatic_resolution_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "ba9290d4-fb2c-4d4d-ab28-5a79e60e2f7a",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb7116b4-f5b4-4889-a026-5686c3a6474a",
+      "name": "Record Automatic Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [280, 120]
+    }
+  ],
+  "connections": {
+    "Receive Synthetic Case Result": {
+      "main": [[
+        {
+          "node": "Send Initial Customer Update",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Send WhatsApp Trial Template",
+          "type": "main",
+          "index": 0
+        }
+      ]]
+    },
+    "Send Initial Customer Update": {
+      "main": [[{
+        "node": "Manager Approval Required?",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Send WhatsApp Trial Template": {
+      "main": [[{
+        "node": "Record WhatsApp Attempt",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Manager Approval Required?": {
+      "main": [
+        [{
+          "node": "Email Manager and Wait",
+          "type": "main",
+          "index": 0
+        }],
+        [{
+          "node": "Send Automatic Confirmation",
+          "type": "main",
+          "index": 0
+        }]
+      ]
+    },
+    "Email Manager and Wait": {
+      "main": [[{
+        "node": "Manager Approved?",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Manager Approved?": {
+      "main": [
+        [{
+          "node": "Send Approval Confirmation",
+          "type": "main",
+          "index": 0
+        }],
+        [{
+          "node": "Send Decline Update",
+          "type": "main",
+          "index": 0
+        }]
+      ]
+    },
+    "Send Approval Confirmation": {
+      "main": [[{
+        "node": "Record Approved Outcome",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Send Decline Update": {
+      "main": [[{
+        "node": "Record Declined Outcome",
+        "type": "main",
+        "index": 0
+      }]]
+    },
+    "Send Automatic Confirmation": {
+      "main": [[{
+        "node": "Record Automatic Outcome",
+        "type": "main",
+        "index": 0
+      }]]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b1dcc89b-6602-4bcb-8ae7-713940130c71",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

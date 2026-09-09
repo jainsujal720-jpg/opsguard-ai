@@ -1,0 +1,146 @@
+{
+  "name": "OpsGuard - EzyHelpers No-Show Case",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-case",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-intake",
+      "name": "Receive Operations Case",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 0],
+      "webhookId": "opsguard-case"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/process",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {}
+      },
+      "id": "process-case",
+      "name": "Run OpsGuard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-360, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "approval-condition",
+              "leftValue": "={{ $json.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {"type": "boolean", "operation": "true", "singleValue": true}
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "approval-check",
+      "name": "Manager Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-100, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "approval-status",
+              "name": "workflow_status",
+              "value": "waiting_for_manager_approval",
+              "type": "string"
+            },
+            {
+              "id": "case-result-approval",
+              "name": "case_result",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "prepare-approval",
+      "name": "Prepare Manager Approval",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [160, -120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "auto-status",
+              "name": "workflow_status",
+              "value": "ready_for_safe_automation",
+              "type": "string"
+            },
+            {
+              "id": "case-result-auto",
+              "name": "case_result",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "prepare-auto",
+      "name": "Prepare Safe Automatic Actions",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [160, 120]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond",
+      "name": "Return Workflow Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Receive Operations Case": {
+      "main": [[{"node": "Run OpsGuard", "type": "main", "index": 0}]]
+    },
+    "Run OpsGuard": {
+      "main": [[{"node": "Manager Approval Required?", "type": "main", "index": 0}]]
+    },
+    "Manager Approval Required?": {
+      "main": [
+        [{"node": "Prepare Manager Approval", "type": "main", "index": 0}],
+        [{"node": "Prepare Safe Automatic Actions", "type": "main", "index": 0}]
+      ]
+    },
+    "Prepare Manager Approval": {
+      "main": [[{"node": "Return Workflow Result", "type": "main", "index": 0}]]
+    },
+    "Prepare Safe Automatic Actions": {
+      "main": [[{"node": "Return Workflow Result", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "2ea8f246-3c1d-4f88-9a64-56a72e3a1542",
+  "meta": {"templateCredsSetupCompleted": true},
+  "tags": []
+}

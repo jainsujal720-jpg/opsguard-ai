@@ -1,0 +1,292 @@
+{
+  "name": "OpsGuard V2 - Customer Updates and Manager Decision",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v2-customer-decision-test",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1a8c0b9c-7a1a-45e3-b9b0-ea0a1df2b9a1",
+      "name": "Receive Synthetic Case Result",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-760, 0],
+      "webhookId": "f1af84b5-183c-4d2a-a75b-94cf47e3fd31"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — We are working on case {{ $json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\n{{ $json.body.case_result.customer_messages.progress_update }}\n\nWe will send another update after the refund decision.\n\nCase ID: {{ $json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "2bb2f8b8-7d07-468e-a4f4-0d9e0de863a4",
+      "name": "Send Initial Customer Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-520, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "3fa955b1-f513-42ca-b569-f7a6f65b68cd",
+              "leftValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c50f16e-3648-48e8-862b-3fddf19553fa",
+      "name": "Manager Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-280, 0]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "message": "=SYNTHETIC APPROVAL TEST — Clicking a button will not issue a real refund.\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.decision }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.case_summary }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.replacement_summary }}\n\nAutomatic policy limit: {{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.policy_limit }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve test refund",
+            "disapproveLabel": "Decline test refund"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4d66394d-a9c9-4435-8ff0-c2ad2b15ccbf",
+      "name": "Email Manager and Wait",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-40, -140],
+      "webhookId": "733810a7-c8f4-4227-b685-b9eeb3aee977"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "50a0c662-4645-447e-9196-7d8621a3b749",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5b5872bd-eb71-4fe2-8708-a9ecee2fdc8f",
+      "name": "Manager Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [200, -140]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund approved for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nGood news — your refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} has been approved.\n\nIn a live EzyHelpers service, the refund would now be sent to the original payment method. We would show the payment provider's confirmed completion estimate instead of leaving you uncertain.\n\nWe will continue coordinating the service resolution described in your earlier update. You do not need to take any further action right now.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "6c25c597-527c-4495-83d7-f85892430f93",
+      "name": "Send Approval Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [460, -220]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} was reviewed and was not approved.\n\nIn a live EzyHelpers service, a support specialist would explain the reason and available next steps. The service-resolution work described in your earlier update would continue separately.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "7d6fde0c-5985-46de-aa31-37ad381261c2",
+      "name": "Send Decline Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [460, -60]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "84d934d3-7157-42d9-a126-91621318dd82",
+              "name": "test_status",
+              "value": "manager_approved_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "89f3181f-4ce8-44b5-b9da-6f7c4ed4f8d6",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8ee0b633-24a3-46b3-9c98-76f3a0f8d298",
+      "name": "Record Approved Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, -220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "94a66193-151a-4467-a4a6-0e5556611206",
+              "name": "test_status",
+              "value": "manager_declined_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "a606a7b5-1788-409a-bd4f-bef7eb81216e",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9fd9c80c-6ea0-458a-9da5-0719185069e5",
+      "name": "Record Declined Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, -60]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Case processed for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\nYour case has been processed automatically because it did not require manager approval. We will continue with the resolution described in your earlier update.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "a3ea2f09-6558-469b-8f25-d1d61eb1316b",
+      "name": "Send Automatic Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-40, 140]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b43077d5-0fd5-405c-bc3c-b7f5c0b55c92",
+              "name": "test_status",
+              "value": "automatic_resolution_customer_notified",
+              "type": "string"
+            },
+            {
+              "id": "ba9290d4-fb2c-4d4d-ab28-5a79e60e2f7a",
+              "name": "case_id",
+              "value": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bb7116b4-f5b4-4889-a026-5686c3a6474a",
+      "name": "Record Automatic Outcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 140]
+    }
+  ],
+  "connections": {
+    "Receive Synthetic Case Result": {
+      "main": [[{"node": "Send Initial Customer Update", "type": "main", "index": 0}]]
+    },
+    "Send Initial Customer Update": {
+      "main": [[{"node": "Manager Approval Required?", "type": "main", "index": 0}]]
+    },
+    "Manager Approval Required?": {
+      "main": [
+        [{"node": "Email Manager and Wait", "type": "main", "index": 0}],
+        [{"node": "Send Automatic Confirmation", "type": "main", "index": 0}]
+      ]
+    },
+    "Email Manager and Wait": {
+      "main": [[{"node": "Manager Approved?", "type": "main", "index": 0}]]
+    },
+    "Manager Approved?": {
+      "main": [
+        [{"node": "Send Approval Confirmation", "type": "main", "index": 0}],
+        [{"node": "Send Decline Update", "type": "main", "index": 0}]
+      ]
+    },
+    "Send Approval Confirmation": {
+      "main": [[{"node": "Record Approved Outcome", "type": "main", "index": 0}]]
+    },
+    "Send Decline Update": {
+      "main": [[{"node": "Record Declined Outcome", "type": "main", "index": 0}]]
+    },
+    "Send Automatic Confirmation": {
+      "main": [[{"node": "Record Automatic Outcome", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cbc56e1b-8c7e-4a88-867a-0aef5d08065e",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

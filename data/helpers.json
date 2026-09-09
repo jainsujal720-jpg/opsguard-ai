@@ -1,0 +1,33 @@
+[
+  {
+    "helper_id": "HLP-2002",
+    "name": "Anjali",
+    "skills": ["home_cleaning", "deep_cleaning"],
+    "available": true,
+    "available_from": "2026-09-08T09:45:00+05:30",
+    "distance_km": 2.5,
+    "rating": 4.8,
+    "active_booking_overlap": false
+  },
+  {
+    "helper_id": "HLP-2003",
+    "name": "Meena",
+    "skills": ["home_cleaning"],
+    "available": true,
+    "available_from": "2026-09-08T10:30:00+05:30",
+    "distance_km": 4.0,
+    "rating": 4.9,
+    "active_booking_overlap": false
+  },
+  {
+    "helper_id": "HLP-2004",
+    "name": "Kavya",
+    "skills": ["cooking"],
+    "available": true,
+    "available_from": "2026-09-08T09:35:00+05:30",
+    "distance_km": 1.0,
+    "rating": 4.7,
+    "active_booking_overlap": false
+  }
+]
+

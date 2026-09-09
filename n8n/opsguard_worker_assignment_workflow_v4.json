@@ -1,0 +1,2523 @@
+{
+  "name": "OpsGuard V4 - Worker Decision, Refund Approval and Audit",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## OpsGuard V4 setup\n1. Create an n8n Data Table named **OpsGuard Audit** with the columns listed in the V4 guide.\n2. Select your Gmail credential in all Gmail nodes.\n3. Select your Twilio API credential in **Send Worker Assignment**.\n4. Replace the three `REPLACE_WITH_...` values in that HTTP node.\n5. Create a WhatsApp quick-reply template with **Accept assignment** (`ACCEPT`) and **Decline assignment** (`DECLINE`).\n6. Activate the workflow and point the Twilio sandbox inbound webhook to the production URL for **Receive Worker Reply**.\n\nSynthetic testing only. No real assignment or refund is executed.",
+        "height": 390,
+        "width": 560,
+        "color": 5
+      },
+      "id": "310ecfbb-58ed-4b94-9bb4-b02c5e8b9d8e",
+      "name": "V4 Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1180,
+        -620
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v4-case-test",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "0a37b17f-fe04-402f-9419-a9059007e142",
+      "name": "Receive Synthetic Case Result",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        -80
+      ],
+      "webhookId": "eb8c0e52-d9e1-4533-93a1-3a884cbae252"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — We are working on case {{ $json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\n{{ $json.body.case_result.customer_messages.progress_update }}\n\nWe are asking the replacement worker to accept or decline the assignment. You will receive a confirmed update only after the worker accepts.\n\nCase ID: {{ $json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "1ee07710-fa53-428e-960b-4655765142d6",
+      "name": "Send Initial Customer Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -720,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':customer_initial' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':customer_initial' }}",
+            "case_id": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+            "event_type": "customer_initial_update",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name }}",
+            "worker_phone": "={{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}",
+            "customer_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+            "replacement_eta": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival }}",
+            "message_sid": "",
+            "details": "Synthetic initial customer update sent",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ea93ddd0-df0d-4805-9491-3093b13bf7d0",
+      "name": "Audit Initial Customer Update",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "46784c70-a1f6-407d-9e15-aad624784681",
+              "leftValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "30f289da-4cad-4526-9e16-ca43497db7d7",
+      "name": "Manager Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "message": "=SYNTHETIC APPROVAL TEST — Clicking a button will not issue a real refund.\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.decision }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.case_summary }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.replacement_summary }}\n\nAutomatic policy limit: {{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.policy_limit }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve test refund",
+            "disapproveLabel": "Decline test refund"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4d1ea692-5f24-41c8-82d0-515baa3e7f36",
+      "name": "Email Manager and Wait",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -360
+      ],
+      "webhookId": "eb31039d-91d4-4677-9b42-7a1037613dae"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "293c456d-a539-4ba8-b1b8-79706f9d12a2",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fb51af3c-69ec-4899-bea7-917952a5dc5e",
+      "name": "Manager Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        340,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund approved for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} has been approved.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "0ed70457-a30e-4478-a155-3516e69341bd",
+      "name": "Send Refund Approval Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }} was reviewed and was not approved.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "40b3a85b-5d46-41b1-ab40-863fd39dc60f",
+      "name": "Send Refund Decline Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_approved' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_approved' }}",
+            "case_id": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "approved",
+            "actor": "manager",
+            "worker_name": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name }}",
+            "worker_phone": "={{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}",
+            "customer_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+            "replacement_eta": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival }}",
+            "message_sid": "",
+            "details": "=Synthetic refund approved: ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }}",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3e846d2d-d313-4588-9ea7-ecca04b9f87d",
+      "name": "Audit Refund Approved",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_declined' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_declined' }}",
+            "case_id": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "declined",
+            "actor": "manager",
+            "worker_name": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name }}",
+            "worker_phone": "={{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}",
+            "customer_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+            "replacement_eta": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival }}",
+            "message_sid": "",
+            "details": "=Synthetic refund declined: ₹{{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.requested_refund_inr }}",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "350e6369-ba3a-4ec9-99c3-4f04aa1a553a",
+      "name": "Audit Refund Declined",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Case processed for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nThe refund request was within the automatic policy limit and did not require manager approval.\n\nCase ID: {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "508ab072-a250-4cc1-8b8b-fd53d86ccaaf",
+      "name": "Send Automatic Refund Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_automatic' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':refund_automatic' }}",
+            "case_id": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "automatic",
+            "actor": "policy_engine",
+            "worker_name": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name }}",
+            "worker_phone": "={{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}",
+            "customer_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+            "replacement_eta": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival }}",
+            "message_sid": "",
+            "details": "Synthetic refund was within the automatic policy limit",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d7bd01e6-bf3b-4f79-88b8-fb99c7f932ca",
+      "name": "Audit Automatic Refund",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/REPLACE_WITH_ACCOUNT_SID/Messages.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}"
+            },
+            {
+              "name": "From",
+              "value": "whatsapp:+REPLACE_WITH_TWILIO_SANDBOX_NUMBER"
+            },
+            {
+              "name": "ContentSid",
+              "value": "REPLACE_WITH_WORKER_ASSIGNMENT_CONTENT_SID"
+            },
+            {
+              "name": "ContentVariables",
+              "value": "={{ JSON.stringify({'1': $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name, '2': $('Receive Synthetic Case Result').item.json.body.case_result.case_id, '3': $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival}) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "65e2168c-2c95-4ef9-b31b-f59a1cc3e0fb",
+      "name": "Send Worker Assignment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        140
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':assignment_requested' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id + ':assignment_requested' }}",
+            "case_id": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+            "event_type": "assignment_requested",
+            "event_status": "={{ $json.sid ? 'submitted_to_twilio' : 'send_failed' }}",
+            "actor": "system",
+            "worker_name": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.name }}",
+            "worker_phone": "={{ $('Receive Synthetic Case Result').item.json.body.test_worker_phone }}",
+            "customer_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+            "replacement_eta": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.recommended_replacement.estimated_arrival }}",
+            "message_sid": "={{ $json.sid || \"\" }}",
+            "details": "Synthetic replacement assignment offered through WhatsApp",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ad5c4b4e-bc6a-4125-94b1-81ef9d7280a5",
+      "name": "Audit Worker Assignment Request",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v4-worker-reply",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "debbef46-4d3c-4444-b9cc-bba414c2e94f",
+      "name": "Receive Worker Reply",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        520
+      ],
+      "webhookId": "06d4e0b4-a473-4658-8b8f-c396c78ff748"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst raw = String(p.ButtonPayload || p.ButtonText || p.Body || '').trim();\nconst normalized = raw.toUpperCase();\nlet decision = 'unrecognized';\nif (normalized === 'ACCEPT' || normalized.includes('ACCEPT ASSIGNMENT')) decision = 'accepted';\nif (normalized === 'DECLINE' || normalized.includes('DECLINE ASSIGNMENT')) decision = 'declined';\nconst workerPhone = String(p.From || '').replace(/^whatsapp:/i, '');\nreturn [{ json: { decision, raw_reply: raw, worker_phone: workerPhone, inbound_message_sid: p.MessageSid || p.SmsMessageSid || '', received_at: new Date().toISOString() } }];"
+      },
+      "id": "8da2dedb-9c78-4958-ae3c-987b6e5b19bb",
+      "name": "Normalize Worker Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "worker_phone",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Worker Reply').item.json.worker_phone }}"
+            },
+            {
+              "keyName": "event_type",
+              "condition": "eq",
+              "keyValue": "assignment_requested"
+            },
+            {
+              "keyName": "event_status",
+              "condition": "eq",
+              "keyValue": "submitted_to_twilio"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "4cde585a-d9d3-4b36-9676-476281298d92",
+      "name": "Find Pending Worker Assignment",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8f87697f-23a5-4591-b033-cbc2ca23f008",
+              "leftValue": "={{ $('Normalize Worker Reply').item.json.decision }}",
+              "rightValue": "accepted",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f4dc4179-4ee4-4707-b713-26248932c60d",
+      "name": "Worker Accepted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "74e3d488-4f2a-49cf-8749-936943b82116",
+              "leftValue": "={{ $('Normalize Worker Reply').item.json.decision }}",
+              "rightValue": "declined",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "98fbbb00-5980-440e-b070-d137b6d93baa",
+      "name": "Worker Declined?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.case_id + ':worker_accepted' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $json.case_id + ':worker_accepted' }}",
+            "case_id": "={{ $json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "accepted",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $json.worker_name }}",
+            "worker_phone": "={{ $json.worker_phone }}",
+            "customer_email": "={{ $json.customer_email }}",
+            "manager_email": "={{ $json.manager_email }}",
+            "replacement_eta": "={{ $json.replacement_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply').item.json.inbound_message_sid }}",
+            "details": "=Worker reply: {{ $('Normalize Worker Reply').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "06db877c-a205-41d7-bbfd-5bbd0fd157c5",
+      "name": "Audit Worker Accepted",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "=OpsGuard TEST — Replacement confirmed for {{ $json.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper has been assigned.\n\nGood news — {{ $json.worker_name }} accepted the replacement assignment and is expected around {{ $json.replacement_eta }}.\n\nCase ID: {{ $json.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "9b155840-f489-4010-8f10-dfd9ce94a9c9",
+      "name": "Send Confirmed Replacement Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        340,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Audit Worker Accepted').item.json.case_id + ':customer_replacement_confirmed' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Audit Worker Accepted').item.json.case_id + ':customer_replacement_confirmed' }}",
+            "case_id": "={{ $('Audit Worker Accepted').item.json.case_id }}",
+            "event_type": "customer_replacement_update",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "={{ $('Audit Worker Accepted').item.json.worker_name }}",
+            "worker_phone": "={{ $('Audit Worker Accepted').item.json.worker_phone }}",
+            "customer_email": "={{ $('Audit Worker Accepted').item.json.customer_email }}",
+            "manager_email": "={{ $('Audit Worker Accepted').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Audit Worker Accepted').item.json.replacement_eta }}",
+            "message_sid": "",
+            "details": "Synthetic customer notified after worker acceptance",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "7cd64328-242c-48dd-8d73-264348bb0bd4",
+      "name": "Audit Customer Replacement Confirmation",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.case_id + ':worker_declined' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $json.case_id + ':worker_declined' }}",
+            "case_id": "={{ $json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "declined",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $json.worker_name }}",
+            "worker_phone": "={{ $json.worker_phone }}",
+            "customer_email": "={{ $json.customer_email }}",
+            "manager_email": "={{ $json.manager_email }}",
+            "replacement_eta": "={{ $json.replacement_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply').item.json.inbound_message_sid }}",
+            "details": "=Worker reply: {{ $('Normalize Worker Reply').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "eb1d1371-e455-4c09-91b6-e0887987ce65",
+      "name": "Audit Worker Declined",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.manager_email }}",
+        "subject": "=OpsGuard TEST — Replacement declined for {{ $json.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — {{ $json.worker_name }} declined the replacement assignment for case {{ $json.case_id }}. Operations should select the next eligible worker. No customer confirmation was sent.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "982a8a90-c1f3-4568-9d81-529c772768bf",
+      "name": "Notify Operations of Worker Decline",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Audit Worker Declined').item.json.case_id + ':operations_escalated' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Audit Worker Declined').item.json.case_id + ':operations_escalated' }}",
+            "case_id": "={{ $('Audit Worker Declined').item.json.case_id }}",
+            "event_type": "operations_escalation",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "={{ $('Audit Worker Declined').item.json.worker_name }}",
+            "worker_phone": "={{ $('Audit Worker Declined').item.json.worker_phone }}",
+            "customer_email": "={{ $('Audit Worker Declined').item.json.customer_email }}",
+            "manager_email": "={{ $('Audit Worker Declined').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Audit Worker Declined').item.json.replacement_eta }}",
+            "message_sid": "",
+            "details": "Operations notified to select another replacement",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ee1119ad-cf69-48a2-b3a5-73fcb1cd9a1a",
+      "name": "Audit Operations Escalation",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.case_id + ':worker_reply_unrecognized:' + $('Normalize Worker Reply').item.json.inbound_message_sid }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $json.case_id + ':worker_reply_unrecognized:' + $('Normalize Worker Reply').item.json.inbound_message_sid }}",
+            "case_id": "={{ $json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "unrecognized",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $json.worker_name }}",
+            "worker_phone": "={{ $json.worker_phone }}",
+            "customer_email": "={{ $json.customer_email }}",
+            "manager_email": "={{ $json.manager_email }}",
+            "replacement_eta": "={{ $json.replacement_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply').item.json.inbound_message_sid }}",
+            "details": "=Unrecognized worker reply: {{ $('Normalize Worker Reply').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f0480c13-1e37-4ef3-84dc-52fb99d3ea9b",
+      "name": "Audit Unrecognized Worker Reply",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        820
+      ]
+    }
+  ],
+  "connections": {
+    "Receive Synthetic Case Result": {
+      "main": [
+        [
+          {
+            "node": "Send Initial Customer Update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Worker Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Initial Customer Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Initial Customer Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Initial Customer Update": {
+      "main": [
+        [
+          {
+            "node": "Manager Approval Required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager Approval Required?": {
+      "main": [
+        [
+          {
+            "node": "Email Manager and Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Automatic Refund Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Manager and Wait": {
+      "main": [
+        [
+          {
+            "node": "Manager Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send Refund Approval Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Refund Decline Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Refund Approval Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Audit Refund Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Refund Decline Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Refund Declined",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Automatic Refund Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Automatic Refund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Worker Assignment": {
+      "main": [
+        [
+          {
+            "node": "Audit Worker Assignment Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Worker Reply": {
+      "main": [
+        [
+          {
+            "node": "Normalize Worker Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Worker Reply": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Worker Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Worker Assignment": {
+      "main": [
+        [
+          {
+            "node": "Worker Accepted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worker Accepted?": {
+      "main": [
+        [
+          {
+            "node": "Audit Worker Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Worker Declined?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Worker Accepted": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmed Replacement Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmed Replacement Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Customer Replacement Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worker Declined?": {
+      "main": [
+        [
+          {
+            "node": "Audit Worker Declined",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Audit Unrecognized Worker Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Worker Declined": {
+      "main": [
+        [
+          {
+            "node": "Notify Operations of Worker Decline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Operations of Worker Decline": {
+      "main": [
+        [
+          {
+            "node": "Audit Operations Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2f4b12ff-ccad-4db6-875f-6a4b28f3e322",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

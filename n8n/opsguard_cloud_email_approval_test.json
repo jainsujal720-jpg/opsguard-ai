@@ -1,0 +1,165 @@
+{
+  "name": "OpsGuard - Synthetic Gmail and Manager Approval Test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-synthetic-email-test",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "62b1b010-f04f-4faa-97f5-9019f693a109",
+      "name": "Receive Synthetic Case Result",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-620, 0],
+      "webhookId": "1bce2ca3-14c2-48a4-a2dd-35b536791c22"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Customer update for {{ $json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\n{{ $json.body.case_result.customer_messages.progress_update }}\n\nCase status: {{ $json.body.case_result.status.replaceAll('_', ' ') }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "a15725b1-7fa4-4c70-91a4-e44f6e16eede",
+      "name": "Send Customer Test Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [-380, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "3266b8ed-19e9-43ca-837b-a3e30b35ba2b",
+              "leftValue": "={{ $('Receive Synthetic Case Result').item.json.body.case_result.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "02807335-821f-49a6-b512-39a87063f9b7",
+      "name": "Refund Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-140, 0]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Receive Synthetic Case Result').item.json.body.test_manager_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Synthetic Case Result').item.json.body.case_result.case_id }}",
+        "message": "=SYNTHETIC APPROVAL TEST — Clicking a button will not issue a real refund.\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.decision }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.case_summary }}\n\n{{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.replacement_summary }}\n\nAutomatic policy limit: {{ $('Receive Synthetic Case Result').item.json.body.case_result.manager_approval_request.policy_limit }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve test refund",
+            "disapproveLabel": "Decline test refund"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d29a5f27-fd2d-4230-8729-35c91cfc01f8",
+      "name": "Email Manager and Wait for Decision",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [120, -100],
+      "webhookId": "f46512e7-233c-476c-a0e4-3f8cfca83b90"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85f4d1cf-c645-4e15-98bc-b20c25af1590",
+              "name": "test_status",
+              "value": "manager_decision_received",
+              "type": "string"
+            },
+            {
+              "id": "c19884a9-7dc6-44ac-a375-b693d227503b",
+              "name": "approval_response",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41c8c87e-aea2-4a95-b3f9-b9643453ad48",
+      "name": "Record Synthetic Decision",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [380, -100]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "327264a3-d82a-43a1-b24d-0f73b9f380a8",
+              "name": "test_status",
+              "value": "no_manager_approval_required",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a8261be0-d262-4256-89ea-3b35522f093c",
+      "name": "Record Automatic Test Path",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [120, 120]
+    }
+  ],
+  "connections": {
+    "Receive Synthetic Case Result": {
+      "main": [[{"node": "Send Customer Test Email", "type": "main", "index": 0}]]
+    },
+    "Send Customer Test Email": {
+      "main": [[{"node": "Refund Approval Required?", "type": "main", "index": 0}]]
+    },
+    "Refund Approval Required?": {
+      "main": [
+        [{"node": "Email Manager and Wait for Decision", "type": "main", "index": 0}],
+        [{"node": "Record Automatic Test Path", "type": "main", "index": 0}]
+      ]
+    },
+    "Email Manager and Wait for Decision": {
+      "main": [[{"node": "Record Synthetic Decision", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "763eceb0-a22d-46b2-9d4e-41c607ffb5b2",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
+

@@ -1,0 +1,14 @@
+[
+  {
+    "booking_id": "BKG-9001",
+    "customer_id": "CUS-1001",
+    "service_type": "home_cleaning",
+    "scheduled_start": "2026-09-08T09:00:00+05:30",
+    "scheduled_end": "2026-09-08T12:00:00+05:30",
+    "assigned_helper_id": "HLP-2001",
+    "status": "confirmed",
+    "check_in_time": null,
+    "area": "Indiranagar, Bengaluru"
+  }
+]
+

@@ -1,0 +1,14 @@
+{
+  "case_id": "EZH-1042",
+  "source": "whatsapp",
+  "received_at": "2026-09-08T09:30:00+05:30",
+  "customer_id": "CUS-1001",
+  "customer_name": "Priya",
+  "booking_id": "BKG-9001",
+  "customer_message": "My cleaner hasn't arrived. I have guests coming at 1 PM. Please arrange someone immediately. I am also requesting a refund of INR 500 for the inconvenience.",
+  "customer_deadline": "2026-09-08T13:00:00+05:30",
+  "requested_refund_inr": 500,
+  "automatic_refund_limit_inr": 300,
+  "max_replacement_distance_km": 5
+}
+
