@@ -1,0 +1,3930 @@
+{
+  "name": "OpsGuard V5 - Dynamic Worker Selection and Automatic Retry",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v5-case-test",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "0a37b17f-fe04-402f-9419-a9059007e142",
+      "name": "Receive Dynamic Case",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        -80
+      ],
+      "webhookId": "eb8c0e52-d9e1-4533-93a1-3a884cbae252"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — We are working on case {{ $json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper or refund is involved.\n\n{{ $json.body.case_result.customer_messages.progress_update }}\n\nOpsGuard is checking eligible, opted-in workers and will confirm a replacement only after one accepts.\n\nCase ID: {{ $json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "1ee07710-fa53-428e-960b-4655765142d6",
+      "name": "Send Initial Customer Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -720,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':customer_initial' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':customer_initial' }}",
+            "case_id": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+            "event_type": "customer_initial_update",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Dynamic Case').item.json.body.test_manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "Synthetic initial customer update sent",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ea93ddd0-df0d-4805-9491-3093b13bf7d0",
+      "name": "Audit Initial Customer Update",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "46784c70-a1f6-407d-9e15-aad624784681",
+              "leftValue": "={{ $('Receive Dynamic Case').item.json.body.case_result.approval_control.approval_required }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "30f289da-4cad-4526-9e16-ca43497db7d7",
+      "name": "Manager Approval Required?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Receive Dynamic Case').item.json.body.test_manager_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "message": "=SYNTHETIC APPROVAL TEST — Clicking a button will not issue a real refund.\n\n{{ $('Receive Dynamic Case').item.json.body.case_result.manager_approval_request.decision }}\n\n{{ $('Receive Dynamic Case').item.json.body.case_result.manager_approval_request.case_summary }}\n\n{{ $('Receive Dynamic Case').item.json.body.case_result.manager_approval_request.replacement_summary }}\n\nAutomatic policy limit: {{ $('Receive Dynamic Case').item.json.body.case_result.manager_approval_request.policy_limit }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve test refund",
+            "disapproveLabel": "Decline test refund"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "4d1ea692-5f24-41c8-82d0-515baa3e7f36",
+      "name": "Email Manager and Wait",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -360
+      ],
+      "webhookId": "eb31039d-91d4-4677-9b42-7a1037613dae"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "293c456d-a539-4ba8-b1b8-79706f9d12a2",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fb51af3c-69ec-4899-bea7-917952a5dc5e",
+      "name": "Manager Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        340,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund approved for {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Dynamic Case').item.json.body.case_result.approval_control.requested_refund_inr }} has been approved.\n\nCase ID: {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "0ed70457-a30e-4478-a155-3516e69341bd",
+      "name": "Send Refund Approval Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Refund decision for {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nYour refund request for ₹{{ $('Receive Dynamic Case').item.json.body.case_result.approval_control.requested_refund_inr }} was reviewed and was not approved.\n\nCase ID: {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "40b3a85b-5d46-41b1-ab40-863fd39dc60f",
+      "name": "Send Refund Decline Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_approved' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_approved' }}",
+            "case_id": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "approved",
+            "actor": "manager",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Dynamic Case').item.json.body.test_manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "=Synthetic refund approved: ₹{{ $('Receive Dynamic Case').item.json.body.case_result.approval_control.requested_refund_inr }}",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3e846d2d-d313-4588-9ea7-ecca04b9f87d",
+      "name": "Audit Refund Approved",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_declined' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_declined' }}",
+            "case_id": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "declined",
+            "actor": "manager",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Dynamic Case').item.json.body.test_manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "=Synthetic refund declined: ₹{{ $('Receive Dynamic Case').item.json.body.case_result.approval_control.requested_refund_inr }}",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "350e6369-ba3a-4ec9-99c3-4f04aa1a553a",
+      "name": "Audit Refund Declined",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+        "subject": "=OpsGuard TEST — Case processed for {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real refund has been issued.\n\nThe refund request was within the automatic policy limit and did not require manager approval.\n\nCase ID: {{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "508ab072-a250-4cc1-8b8b-fd53d86ccaaf",
+      "name": "Send Automatic Refund Update",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_automatic' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id + ':refund_automatic' }}",
+            "case_id": "={{ $('Receive Dynamic Case').item.json.body.case_result.case_id }}",
+            "event_type": "refund_decision",
+            "event_status": "automatic",
+            "actor": "policy_engine",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Receive Dynamic Case').item.json.body.test_customer_email }}",
+            "manager_email": "={{ $('Receive Dynamic Case').item.json.body.test_manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "Synthetic refund was within the automatic policy limit",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d7bd01e6-bf3b-4f79-88b8-fb99c7f932ca",
+      "name": "Audit Automatic Refund",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## OpsGuard V5 setup\n1. Keep the existing **OpsGuard Audit** table.\n2. Import `opsguard_workers_sample.csv` as **OpsGuard Workers**.\n3. Import `opsguard_cases_template.csv` as **OpsGuard Cases**.\n4. Select Gmail credentials in the Gmail nodes.\n5. Select the Twilio credential and replace the three placeholders in both WhatsApp HTTP nodes.\n6. Activate the workflow and set the Twilio inbound webhook to the production URL for **Receive Worker Reply V5**.\n\nV5 deterministically filters and ranks opted-in workers, retries the next candidate after a decline, and confirms the customer only after acceptance. Synthetic testing only.",
+        "height": 430,
+        "width": 610,
+        "color": 5
+      },
+      "id": "daf31c6e-ee55-40e7-a6a5-c20cd6c27d8b",
+      "name": "V5 Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1240,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Workers",
+          "mode": "name"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "19f2d289-5843-4660-89c1-0574f2ea9c04",
+      "name": "Get Worker Pool",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const request = $('Receive Dynamic Case').first().json.body ?? $('Receive Dynamic Case').first().json;\nconst c = request.case_result ?? {};\nconst bool = (v) => v === true || String(v).toLowerCase() === 'true' || String(v) === '1';\nconst norm = (v) => String(v ?? '').trim().toLowerCase();\nconst requiredService = norm(c.service_required);\nconst requiredArea = norm(c.service_area);\nconst maxDistance = Number(c.max_distance_km ?? 10);\nconst testMode = bool(request.test_mode);\nconst testPhone = String(request.test_worker_phone ?? '').trim();\n\nconst candidates = $input.all().map((item) => item.json).filter((w) => {\n  const available = bool(w.available);\n  const optedIn = bool(w.opted_in);\n  const statusOk = ['available', 'ready'].includes(norm(w.assignment_status));\n  const serviceOk = !requiredService || norm(w.service_type) === requiredService;\n  const areaOk = !requiredArea || norm(w.area) === requiredArea;\n  const distanceOk = Number(w.distance_km ?? 999) <= maxDistance;\n  return available && optedIn && statusOk && serviceOk && areaOk && distanceOk;\n}).map((w) => {\n  const rating = Number(w.rating ?? 0);\n  const distance = Number(w.distance_km ?? 999);\n  const acceptanceRate = Number(w.acceptance_rate ?? 0);\n  const workload = Number(w.current_workload ?? 0);\n  const score = Math.round((rating * 20 + acceptanceRate * 20 - distance * 5 - workload * 10) * 100) / 100;\n  return {\n    worker_id: String(w.worker_id),\n    worker_name: String(w.worker_name),\n    worker_phone: testMode ? testPhone : String(w.phone),\n    estimated_arrival: String(w.estimated_arrival ?? 'ETA pending'),\n    score,\n    rating,\n    distance_km: distance,\n    acceptance_rate: acceptanceRate,\n    rationale: 'Eligible, opted in, available, service/area match; ranked by rating, acceptance, distance and workload',\n  };\n}).sort((a, b) => b.score - a.score || a.distance_km - b.distance_km || b.rating - a.rating || a.worker_id.localeCompare(b.worker_id));\n\nconst selected = candidates[0] ?? null;\nreturn [{ json: {\n  selection_status: selected ? 'candidate_selected' : 'no_candidates',\n  case_id: String(c.case_id ?? ''),\n  customer_email: String(request.test_customer_email ?? ''),\n  manager_email: String(request.test_manager_email ?? ''),\n  service_type: String(c.service_required ?? ''),\n  area: String(c.service_area ?? ''),\n  candidate_queue_json: JSON.stringify(candidates),\n  current_candidate_index: selected ? 0 : -1,\n  current_worker_id: selected?.worker_id ?? '',\n  current_worker_name: selected?.worker_name ?? '',\n  current_worker_phone: selected?.worker_phone ?? '',\n  current_eta: selected?.estimated_arrival ?? '',\n  assignment_status: selected ? 'assignment_pending' : 'no_candidates',\n  selected_score: selected?.score ?? null,\n  eligible_candidate_count: candidates.length,\n  updated_at: new Date().toISOString(),\n} }];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "c7026593-d944-4c62-889c-b4808a6305ab",
+      "name": "Rank Eligible Workers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ccfeea83-170c-4724-a883-4aad672bb918",
+              "leftValue": "={{ $json.selection_status }}",
+              "rightValue": "candidate_selected",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "714d877f-ccfb-4738-b2ff-b504081478f5",
+      "name": "Candidate Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Cases",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "case_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Rank Eligible Workers').item.json.case_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "case_id": "={{ $('Rank Eligible Workers').item.json.case_id }}",
+            "customer_email": "={{ $('Rank Eligible Workers').item.json.customer_email }}",
+            "manager_email": "={{ $('Rank Eligible Workers').item.json.manager_email }}",
+            "service_type": "={{ $('Rank Eligible Workers').item.json.service_type }}",
+            "area": "={{ $('Rank Eligible Workers').item.json.area }}",
+            "candidate_queue_json": "={{ $('Rank Eligible Workers').item.json.candidate_queue_json }}",
+            "current_candidate_index": "={{ $('Rank Eligible Workers').item.json.current_candidate_index }}",
+            "current_worker_id": "={{ $('Rank Eligible Workers').item.json.current_worker_id }}",
+            "current_worker_name": "={{ $('Rank Eligible Workers').item.json.current_worker_name }}",
+            "current_worker_phone": "={{ $('Rank Eligible Workers').item.json.current_worker_phone }}",
+            "current_eta": "={{ $('Rank Eligible Workers').item.json.current_eta }}",
+            "assignment_status": "assignment_pending",
+            "updated_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "case_id"
+          ],
+          "schema": [
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "service_type",
+              "displayName": "service_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "area",
+              "displayName": "area",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "candidate_queue_json",
+              "displayName": "candidate_queue_json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_candidate_index",
+              "displayName": "current_candidate_index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "current_worker_id",
+              "displayName": "current_worker_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_name",
+              "displayName": "current_worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_phone",
+              "displayName": "current_worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_eta",
+              "displayName": "current_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "assignment_status",
+              "displayName": "assignment_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "65528105-e5f1-4ce6-bcfd-a38944e591c7",
+      "name": "Save Initial Case State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/REPLACE_WITH_ACCOUNT_SID/Messages.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $json.current_worker_phone }}"
+            },
+            {
+              "name": "From",
+              "value": "whatsapp:+REPLACE_WITH_TWILIO_SANDBOX_NUMBER"
+            },
+            {
+              "name": "ContentSid",
+              "value": "REPLACE_WITH_WORKER_ASSIGNMENT_CONTENT_SID"
+            },
+            {
+              "name": "ContentVariables",
+              "value": "={{ JSON.stringify({'1': $json.current_worker_name, '2': $json.case_id, '3': $json.current_eta}) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb400863-9432-41bf-9900-deea13275914",
+      "name": "Send First Worker Offer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Save Initial Case State').item.json.case_id + ':worker_offer:0' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Save Initial Case State').item.json.case_id + ':worker_offer:0' }}",
+            "case_id": "={{ $('Save Initial Case State').item.json.case_id }}",
+            "event_type": "assignment_requested",
+            "event_status": "={{ $json.sid ? 'submitted_to_twilio' : 'send_failed' }}",
+            "actor": "selection_engine",
+            "worker_name": "={{ $('Save Initial Case State').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Save Initial Case State').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Save Initial Case State').item.json.customer_email }}",
+            "manager_email": "={{ $('Save Initial Case State').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Save Initial Case State').item.json.current_eta }}",
+            "message_sid": "={{ $json.sid || \"\" }}",
+            "details": "=Ranked worker offer #1; score {{ $('Rank Eligible Workers').item.json.selected_score }} of {{ $('Rank Eligible Workers').item.json.eligible_candidate_count }} eligible workers",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "278434f5-3818-4042-b0bd-a4490f53f105",
+      "name": "Audit First Worker Offer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.manager_email }}",
+        "subject": "=OpsGuard TEST — No eligible worker for {{ $json.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — OpsGuard found no available, opted-in worker matching {{ $json.service_type }} in {{ $json.area }}. Operations should review the case manually. No customer confirmation was sent.\n\nCase ID: {{ $json.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "2644c543-5360-4c71-b307-932b48b1f3e1",
+      "name": "Notify No Eligible Worker",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Rank Eligible Workers').item.json.case_id + ':no_eligible_worker' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Rank Eligible Workers').item.json.case_id + ':no_eligible_worker' }}",
+            "case_id": "={{ $('Rank Eligible Workers').item.json.case_id }}",
+            "event_type": "worker_selection",
+            "event_status": "no_candidates",
+            "actor": "selection_engine",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Rank Eligible Workers').item.json.customer_email }}",
+            "manager_email": "={{ $('Rank Eligible Workers').item.json.manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "No available, opted-in worker matched service, area and distance rules",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1cc338ff-cd4f-4a20-9795-90622f98b95a",
+      "name": "Audit No Eligible Worker",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opsguard-v5-worker-reply",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "b1b9379e-13f0-4700-a44f-ed103a7ac4a9",
+      "name": "Receive Worker Reply V5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        620
+      ],
+      "webhookId": "9db72db7-9c7b-44ba-a88d-d33f31e99f4c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst raw = String(p.ButtonPayload || p.ButtonText || p.Body || '').trim();\nconst normalized = raw.toUpperCase();\nlet decision = 'unrecognized';\nif (['ACCEPT', 'ACCEPT ASSIGNMENT', 'YES', 'A', 'C', 'CONFIRM'].includes(normalized)) decision = 'accepted';\nif (['DECLINE', 'DECLINE ASSIGNMENT', 'NO', 'D', 'R', 'RESCHEDULE'].includes(normalized)) decision = 'declined';\nconst workerPhone = String(p.From || '').replace(/^whatsapp:/i, '');\nreturn [{ json: { decision, raw_reply: raw, worker_phone: workerPhone, inbound_message_sid: p.MessageSid || p.SmsMessageSid || '', received_at: new Date().toISOString() } }];"
+      },
+      "id": "ea7b15f8-b65f-452c-ba9d-db66913c67fe",
+      "name": "Normalize Worker Reply V5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Cases",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "current_worker_phone",
+              "condition": "eq",
+              "keyValue": "={{ $('Normalize Worker Reply V5').item.json.worker_phone }}"
+            },
+            {
+              "keyName": "assignment_status",
+              "condition": "eq",
+              "keyValue": "assignment_pending"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "updated_at",
+        "orderByDirection": "DESC",
+        "options": {}
+      },
+      "id": "41c4013c-3b87-4f2c-acb3-15b4ca2c2847",
+      "name": "Find Pending Dynamic Case",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2142dc3b-acac-49bf-a70e-5ee412071f3a",
+              "leftValue": "={{ $('Normalize Worker Reply V5').item.json.decision }}",
+              "rightValue": "accepted",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "78bdc6eb-9649-4da4-8b5e-e5d5db42ea8a",
+      "name": "Worker Accepted V5?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -180,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Cases",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "case_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Find Pending Dynamic Case').item.json.case_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "case_id": "={{ $('Find Pending Dynamic Case').item.json.case_id }}",
+            "customer_email": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+            "manager_email": "={{ $('Find Pending Dynamic Case').item.json.manager_email }}",
+            "service_type": "={{ $('Find Pending Dynamic Case').item.json.service_type }}",
+            "area": "={{ $('Find Pending Dynamic Case').item.json.area }}",
+            "candidate_queue_json": "={{ $('Find Pending Dynamic Case').item.json.candidate_queue_json }}",
+            "current_candidate_index": "={{ $('Find Pending Dynamic Case').item.json.current_candidate_index }}",
+            "current_worker_id": "={{ $('Find Pending Dynamic Case').item.json.current_worker_id }}",
+            "current_worker_name": "={{ $('Find Pending Dynamic Case').item.json.current_worker_name }}",
+            "current_worker_phone": "={{ $('Find Pending Dynamic Case').item.json.current_worker_phone }}",
+            "current_eta": "={{ $('Find Pending Dynamic Case').item.json.current_eta }}",
+            "assignment_status": "confirmed",
+            "updated_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "case_id"
+          ],
+          "schema": [
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "service_type",
+              "displayName": "service_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "area",
+              "displayName": "area",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "candidate_queue_json",
+              "displayName": "candidate_queue_json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_candidate_index",
+              "displayName": "current_candidate_index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "current_worker_id",
+              "displayName": "current_worker_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_name",
+              "displayName": "current_worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_phone",
+              "displayName": "current_worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_eta",
+              "displayName": "current_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "assignment_status",
+              "displayName": "assignment_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ba5454f4-5f85-4c8a-813c-4b45ad956687",
+      "name": "Confirm Case Assignment",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_accepted' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_accepted' }}",
+            "case_id": "={{ $('Find Pending Dynamic Case').item.json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "accepted",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $('Find Pending Dynamic Case').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Find Pending Dynamic Case').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+            "manager_email": "={{ $('Find Pending Dynamic Case').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Find Pending Dynamic Case').item.json.current_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply V5').item.json.inbound_message_sid }}",
+            "details": "=Worker reply: {{ $('Normalize Worker Reply V5').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply V5').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2ccc35a0-5971-4f69-a749-29fae00f92d0",
+      "name": "Audit Dynamic Worker Accepted",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+        "subject": "=OpsGuard TEST — Replacement confirmed for {{ $('Find Pending Dynamic Case').item.json.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — No real helper has been assigned.\n\nGood news — {{ $('Find Pending Dynamic Case').item.json.current_worker_name }} accepted the replacement assignment and is expected {{ $('Find Pending Dynamic Case').item.json.current_eta }}.\n\nCase ID: {{ $('Find Pending Dynamic Case').item.json.case_id }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "053c6a35-fd6f-4e40-9d88-2f989a25bc23",
+      "name": "Send Dynamic Replacement Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':customer_replacement_confirmed' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':customer_replacement_confirmed' }}",
+            "case_id": "={{ $('Find Pending Dynamic Case').item.json.case_id }}",
+            "event_type": "customer_replacement_update",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "={{ $('Find Pending Dynamic Case').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Find Pending Dynamic Case').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+            "manager_email": "={{ $('Find Pending Dynamic Case').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Find Pending Dynamic Case').item.json.current_eta }}",
+            "message_sid": "",
+            "details": "Synthetic customer notified after dynamically selected worker accepted",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f74edc62-8ac3-4751-8875-d8901cf43735",
+      "name": "Audit Dynamic Customer Confirmation",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        860,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "19d91f3b-3d0b-4cc5-b1e1-69fcb2ed8d6d",
+              "leftValue": "={{ $('Normalize Worker Reply V5').item.json.decision }}",
+              "rightValue": "declined",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2896b9f5-a683-4d1d-9d20-d409c6048f42",
+      "name": "Worker Declined V5?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_declined:' + $('Find Pending Dynamic Case').item.json.current_candidate_index }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_declined:' + $('Find Pending Dynamic Case').item.json.current_candidate_index }}",
+            "case_id": "={{ $('Find Pending Dynamic Case').item.json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "declined",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $('Find Pending Dynamic Case').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Find Pending Dynamic Case').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+            "manager_email": "={{ $('Find Pending Dynamic Case').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Find Pending Dynamic Case').item.json.current_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply V5').item.json.inbound_message_sid }}",
+            "details": "=Worker reply: {{ $('Normalize Worker Reply V5').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply V5').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "fa58f36e-b793-487e-8a67-57737762f037",
+      "name": "Audit Dynamic Worker Declined",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const state = $('Find Pending Dynamic Case').first().json;\nlet queue = [];\ntry { queue = JSON.parse(state.candidate_queue_json || '[]'); } catch (e) { queue = []; }\nconst nextIndex = Number(state.current_candidate_index ?? -1) + 1;\nconst next = queue[nextIndex] ?? null;\nreturn [{ json: {\n  ...state,\n  current_candidate_index: nextIndex,\n  current_worker_id: next?.worker_id ?? '',\n  current_worker_name: next?.worker_name ?? '',\n  current_worker_phone: next?.worker_phone ?? '',\n  current_eta: next?.estimated_arrival ?? '',\n  selected_score: next?.score ?? null,\n  has_next_candidate: Boolean(next),\n  assignment_status: next ? 'assignment_pending' : 'candidates_exhausted',\n  updated_at: new Date().toISOString(),\n} }];"
+      },
+      "id": "4c2a980f-1c8c-4aaa-9c2f-cb5ee6daab93",
+      "name": "Advance to Next Candidate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "636a1d13-ebad-4ef5-925a-0585d49de117",
+              "leftValue": "={{ $json.has_next_candidate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "722fd478-52a8-41c1-a7f7-f1170b40d0f6",
+      "name": "Next Candidate Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        860,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Cases",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "case_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Advance to Next Candidate').item.json.case_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "case_id": "={{ $('Advance to Next Candidate').item.json.case_id }}",
+            "customer_email": "={{ $('Advance to Next Candidate').item.json.customer_email }}",
+            "manager_email": "={{ $('Advance to Next Candidate').item.json.manager_email }}",
+            "service_type": "={{ $('Advance to Next Candidate').item.json.service_type }}",
+            "area": "={{ $('Advance to Next Candidate').item.json.area }}",
+            "candidate_queue_json": "={{ $('Advance to Next Candidate').item.json.candidate_queue_json }}",
+            "current_candidate_index": "={{ $('Advance to Next Candidate').item.json.current_candidate_index }}",
+            "current_worker_id": "={{ $('Advance to Next Candidate').item.json.current_worker_id }}",
+            "current_worker_name": "={{ $('Advance to Next Candidate').item.json.current_worker_name }}",
+            "current_worker_phone": "={{ $('Advance to Next Candidate').item.json.current_worker_phone }}",
+            "current_eta": "={{ $('Advance to Next Candidate').item.json.current_eta }}",
+            "assignment_status": "assignment_pending",
+            "updated_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "case_id"
+          ],
+          "schema": [
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "service_type",
+              "displayName": "service_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "area",
+              "displayName": "area",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "candidate_queue_json",
+              "displayName": "candidate_queue_json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_candidate_index",
+              "displayName": "current_candidate_index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "current_worker_id",
+              "displayName": "current_worker_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_name",
+              "displayName": "current_worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_phone",
+              "displayName": "current_worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_eta",
+              "displayName": "current_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "assignment_status",
+              "displayName": "assignment_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "5facc073-857b-48f4-917d-caab12c365f2",
+      "name": "Save Next Candidate State",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/REPLACE_WITH_ACCOUNT_SID/Messages.json",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $json.current_worker_phone }}"
+            },
+            {
+              "name": "From",
+              "value": "whatsapp:+REPLACE_WITH_TWILIO_SANDBOX_NUMBER"
+            },
+            {
+              "name": "ContentSid",
+              "value": "REPLACE_WITH_WORKER_ASSIGNMENT_CONTENT_SID"
+            },
+            {
+              "name": "ContentVariables",
+              "value": "={{ JSON.stringify({'1': $json.current_worker_name, '2': $json.case_id, '3': $json.current_eta}) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5788c476-69cc-48a9-903b-a08f334b1140",
+      "name": "Send Next Worker Offer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1380,
+        620
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Save Next Candidate State').item.json.case_id + ':worker_offer:' + $('Save Next Candidate State').item.json.current_candidate_index }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Save Next Candidate State').item.json.case_id + ':worker_offer:' + $('Save Next Candidate State').item.json.current_candidate_index }}",
+            "case_id": "={{ $('Save Next Candidate State').item.json.case_id }}",
+            "event_type": "assignment_requested",
+            "event_status": "={{ $json.sid ? 'submitted_to_twilio' : 'send_failed' }}",
+            "actor": "selection_engine",
+            "worker_name": "={{ $('Save Next Candidate State').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Save Next Candidate State').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Save Next Candidate State').item.json.customer_email }}",
+            "manager_email": "={{ $('Save Next Candidate State').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Save Next Candidate State').item.json.current_eta }}",
+            "message_sid": "={{ $json.sid || \"\" }}",
+            "details": "=Automatically tried candidate #{{ $('Save Next Candidate State').item.json.current_candidate_index + 1 }} after prior decline; score {{ $('Advance to Next Candidate').item.json.selected_score }}",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "9af4a67e-c2cf-4a64-9eae-262b19b40821",
+      "name": "Audit Next Worker Offer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1640,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Cases",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "case_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Advance to Next Candidate').item.json.case_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "case_id": "={{ $('Advance to Next Candidate').item.json.case_id }}",
+            "customer_email": "={{ $('Advance to Next Candidate').item.json.customer_email }}",
+            "manager_email": "={{ $('Advance to Next Candidate').item.json.manager_email }}",
+            "service_type": "={{ $('Advance to Next Candidate').item.json.service_type }}",
+            "area": "={{ $('Advance to Next Candidate').item.json.area }}",
+            "candidate_queue_json": "={{ $('Advance to Next Candidate').item.json.candidate_queue_json }}",
+            "current_candidate_index": "={{ $('Advance to Next Candidate').item.json.current_candidate_index }}",
+            "current_worker_id": "",
+            "current_worker_name": "",
+            "current_worker_phone": "",
+            "current_eta": "",
+            "assignment_status": "candidates_exhausted",
+            "updated_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "case_id"
+          ],
+          "schema": [
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "service_type",
+              "displayName": "service_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "area",
+              "displayName": "area",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "candidate_queue_json",
+              "displayName": "candidate_queue_json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_candidate_index",
+              "displayName": "current_candidate_index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "current_worker_id",
+              "displayName": "current_worker_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_name",
+              "displayName": "current_worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_worker_phone",
+              "displayName": "current_worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "current_eta",
+              "displayName": "current_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "assignment_status",
+              "displayName": "assignment_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "b3c8077e-932f-4d9c-9a81-06cd7720a082",
+      "name": "Mark Candidates Exhausted",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Advance to Next Candidate').item.json.manager_email }}",
+        "subject": "=OpsGuard TEST — Candidate list exhausted for {{ $('Advance to Next Candidate').item.json.case_id }}",
+        "emailType": "text",
+        "message": "=SYNTHETIC TEST — Every eligible worker declined or the candidate list is empty for case {{ $('Advance to Next Candidate').item.json.case_id }}. Operations should review manually. No customer confirmation was sent.",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "OpsGuard AI Test"
+        }
+      },
+      "id": "622bc286-8409-4dd8-b2d4-7bf0d115c560",
+      "name": "Notify Operations Candidates Exhausted",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1380,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Advance to Next Candidate').item.json.case_id + ':candidates_exhausted' }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Advance to Next Candidate').item.json.case_id + ':candidates_exhausted' }}",
+            "case_id": "={{ $('Advance to Next Candidate').item.json.case_id }}",
+            "event_type": "operations_escalation",
+            "event_status": "sent",
+            "actor": "system",
+            "worker_name": "",
+            "worker_phone": "",
+            "customer_email": "={{ $('Advance to Next Candidate').item.json.customer_email }}",
+            "manager_email": "={{ $('Advance to Next Candidate').item.json.manager_email }}",
+            "replacement_eta": "",
+            "message_sid": "",
+            "details": "All dynamically ranked candidates were exhausted; operations notified",
+            "event_timestamp": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3790088f-26bd-4615-ba69-1a9c0370c533",
+      "name": "Audit Candidates Exhausted",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1640,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "OpsGuard Audit",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idempotency_key",
+              "condition": "eq",
+              "keyValue": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_reply_unrecognized:' + $('Normalize Worker Reply V5').item.json.inbound_message_sid }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idempotency_key": "={{ $('Find Pending Dynamic Case').item.json.case_id + ':worker_reply_unrecognized:' + $('Normalize Worker Reply V5').item.json.inbound_message_sid }}",
+            "case_id": "={{ $('Find Pending Dynamic Case').item.json.case_id }}",
+            "event_type": "worker_assignment_reply",
+            "event_status": "unrecognized",
+            "actor": "replacement_worker",
+            "worker_name": "={{ $('Find Pending Dynamic Case').item.json.current_worker_name }}",
+            "worker_phone": "={{ $('Find Pending Dynamic Case').item.json.current_worker_phone }}",
+            "customer_email": "={{ $('Find Pending Dynamic Case').item.json.customer_email }}",
+            "manager_email": "={{ $('Find Pending Dynamic Case').item.json.manager_email }}",
+            "replacement_eta": "={{ $('Find Pending Dynamic Case').item.json.current_eta }}",
+            "message_sid": "={{ $('Normalize Worker Reply V5').item.json.inbound_message_sid }}",
+            "details": "=Unrecognized worker reply: {{ $('Normalize Worker Reply V5').item.json.raw_reply }}",
+            "event_timestamp": "={{ $('Normalize Worker Reply V5').item.json.received_at }}"
+          },
+          "matchingColumns": [
+            "idempotency_key"
+          ],
+          "schema": [
+            {
+              "id": "idempotency_key",
+              "displayName": "idempotency_key",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_name",
+              "displayName": "worker_name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "worker_phone",
+              "displayName": "worker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "manager_email",
+              "displayName": "manager_email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "replacement_eta",
+              "displayName": "replacement_eta",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message_sid",
+              "displayName": "message_sid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "details",
+              "displayName": "details",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "event_timestamp",
+              "displayName": "event_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4abcec8f-e243-4e2e-990f-b8cf42cbae2b",
+      "name": "Audit Unrecognized Reply V5",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        340,
+        900
+      ]
+    }
+  ],
+  "connections": {
+    "Receive Dynamic Case": {
+      "main": [
+        [
+          {
+            "node": "Send Initial Customer Update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Worker Pool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Initial Customer Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Initial Customer Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Initial Customer Update": {
+      "main": [
+        [
+          {
+            "node": "Manager Approval Required?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager Approval Required?": {
+      "main": [
+        [
+          {
+            "node": "Email Manager and Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Automatic Refund Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Manager and Wait": {
+      "main": [
+        [
+          {
+            "node": "Manager Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager Approved?": {
+      "main": [
+        [
+          {
+            "node": "Send Refund Approval Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Refund Decline Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Refund Approval Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Audit Refund Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Refund Decline Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Refund Declined",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Automatic Refund Update": {
+      "main": [
+        [
+          {
+            "node": "Audit Automatic Refund",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Worker Pool": {
+      "main": [
+        [
+          {
+            "node": "Rank Eligible Workers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rank Eligible Workers": {
+      "main": [
+        [
+          {
+            "node": "Candidate Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidate Found?": {
+      "main": [
+        [
+          {
+            "node": "Save Initial Case State",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify No Eligible Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Initial Case State": {
+      "main": [
+        [
+          {
+            "node": "Send First Worker Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send First Worker Offer": {
+      "main": [
+        [
+          {
+            "node": "Audit First Worker Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify No Eligible Worker": {
+      "main": [
+        [
+          {
+            "node": "Audit No Eligible Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Worker Reply V5": {
+      "main": [
+        [
+          {
+            "node": "Normalize Worker Reply V5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Worker Reply V5": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Dynamic Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Dynamic Case": {
+      "main": [
+        [
+          {
+            "node": "Worker Accepted V5?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worker Accepted V5?": {
+      "main": [
+        [
+          {
+            "node": "Confirm Case Assignment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Worker Declined V5?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Case Assignment": {
+      "main": [
+        [
+          {
+            "node": "Audit Dynamic Worker Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Dynamic Worker Accepted": {
+      "main": [
+        [
+          {
+            "node": "Send Dynamic Replacement Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Dynamic Replacement Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Audit Dynamic Customer Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worker Declined V5?": {
+      "main": [
+        [
+          {
+            "node": "Audit Dynamic Worker Declined",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Audit Unrecognized Reply V5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Dynamic Worker Declined": {
+      "main": [
+        [
+          {
+            "node": "Advance to Next Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advance to Next Candidate": {
+      "main": [
+        [
+          {
+            "node": "Next Candidate Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next Candidate Available?": {
+      "main": [
+        [
+          {
+            "node": "Save Next Candidate State",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Candidates Exhausted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Next Candidate State": {
+      "main": [
+        [
+          {
+            "node": "Send Next Worker Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Next Worker Offer": {
+      "main": [
+        [
+          {
+            "node": "Audit Next Worker Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Candidates Exhausted": {
+      "main": [
+        [
+          {
+            "node": "Notify Operations Candidates Exhausted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Operations Candidates Exhausted": {
+      "main": [
+        [
+          {
+            "node": "Audit Candidates Exhausted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "036d0498-818e-4874-82b9-f432dc67d5de",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
