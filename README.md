@@ -1,4 +1,4 @@
-# OpsGuard AI 
+# OpsGuard AI for EzyHelpers
 
 OpsGuard is a governed exception-handling prototype for household-service operations. It detects a service failure, interprets customer language, applies deterministic business rules, requests human approval when required, and coordinates customer and worker communication through email and WhatsApp.
 
@@ -6,9 +6,9 @@ The project demonstrates a practical operating principle:
 
 > AI interprets customer language. Rules calculate operational facts. Humans retain control of consequential decisions.
 
-## Validated end-to-end result
+## Validated V3 result
 
-The V4 workflow has been tested end to end with synthetic cases:
+The V3 workflow has been tested end to end with a synthetic case:
 
 - The webhook accepted a simulated helper no-show.
 - The customer received an initial email update.
@@ -16,14 +16,9 @@ The V4 workflow has been tested end to end with synthetic cases:
 - The manager approved the synthetic ₹500 refund.
 - The customer received the approval email.
 - A Twilio WhatsApp trial template was delivered successfully.
-- The worker acceptance reply triggered the customer replacement confirmation.
-- The worker decline reply triggered an operations escalation without sending a false customer confirmation.
-- Both paths and their refund decisions were persisted in the OpsGuard Audit table.
 - All 10 Python regression tests passed.
 
 No real helper assignment, payment, or refund was performed.
-
-V4 includes a worker-decision loop: a replacement worker receives a WhatsApp assignment, an inbound webhook captures `ACCEPT` or `DECLINE`, the customer is confirmed only after acceptance, declines return to operations, and every transition is persisted in an n8n audit table.
 
 ## Business problem
 
@@ -70,23 +65,20 @@ The workflow sends an immediate customer update, asks the manager for a decision
 
 ```text
 opsguard-ezyhelpers/
+├── app.py                              # Streamlit demonstration dashboard
 ├── opsguard/
 │   ├── workflow.py                    # Main orchestration logic
 │   ├── rules.py                       # Deterministic business rules
-│   ├── agents.py                      # AI interpretation boundary
-│   ├── formatting.py                  # Message and output formatting
-│   ├── io.py                          # Synthetic data loading
-│   ├── server.py                      # Local webhook demonstration
-│   └── cli.py                         # Command-line entry point
+│   ├── models.py                      # Typed data models
+│   ├── demo_data.py                   # Synthetic scenarios
+│   └── services.py                    # Optional AI integration boundary
 ├── n8n/
-│   ├── opsguard_multichannel_workflow_v3.json
-│   └── opsguard_worker_assignment_workflow_v4.json
+│   └── opsguard_multichannel_workflow_v3.json
 ├── tests/
 │   └── test_workflow.py               # Regression tests
 ├── outputs/
 │   └── demo_result.json               # Example structured result
 ├── N8N_SETUP_GUIDE.md
-├── N8N_V4_WORKER_ASSIGNMENT_GUIDE.md
 └── PROJECT_WALKTHROUGH.md
 ```
 
@@ -105,6 +97,12 @@ Run the command-line demonstration:
 
 ```bash
 python -m opsguard.cli
+```
+
+Run the dashboard:
+
+```bash
+streamlit run app.py
 ```
 
 Run the regression suite:
@@ -135,19 +133,6 @@ The four WhatsApp values are:
 | `REPLACE_WITH_CONTENT_SID` | Approved or trial WhatsApp Content SID |
 
 Do not commit auth tokens, API keys, personal phone numbers, or production credentials.
-
-## Continue with the V4 worker-decision workflow
-
-Import [`n8n/opsguard_worker_assignment_workflow_v4.json`](n8n/opsguard_worker_assignment_workflow_v4.json) and follow [`N8N_V4_WORKER_ASSIGNMENT_GUIDE.md`](N8N_V4_WORKER_ASSIGNMENT_GUIDE.md).
-
-V4 adds:
-
-- a WhatsApp quick-reply assignment for the replacement worker;
-- an inbound worker-response webhook;
-- accepted, declined, and unrecognized response handling;
-- customer confirmation only after worker acceptance;
-- operations escalation after worker decline; and
-- a persistent audit table for case actions and decisions.
 
 ## Trigger the synthetic webhook
 
@@ -183,9 +168,9 @@ Use the n8n execution view to confirm which branch ran and whether each channel 
 ## Current limitations
 
 - The WhatsApp trial uses Twilio's appointment-reminder template, not a custom OpsGuard template.
-- Only WhatsApp numbers joined to the Twilio sandbox can participate in trial testing.
+- The WhatsApp recipient is fixed for sandbox testing rather than selected dynamically from worker data.
 - The prototype does not call a live EzyHelpers scheduling, worker, CRM, or payments API.
-- Audit records are stored in an n8n Data Table rather than a production audit database.
+- Approval records are demonstrated inside n8n rather than written to a production audit store.
 - Delivery-status callbacks, retries, idempotency, and alerting still need production implementation.
 
 ## Production extension
@@ -204,3 +189,4 @@ A production version should:
 ## Interview summary
 
 OpsGuard demonstrates product and program judgment as much as workflow automation. It translates a messy service-recovery problem into a controlled operating system: structured intake, explicit policies, bounded AI, human escalation, resilient communication, and measurable outcomes.
+
