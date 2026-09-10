@@ -1,4 +1,4 @@
-# OpsGuard AI for EzyHelpers
+# OpsGuard AI 
 
 OpsGuard is a governed exception-handling prototype for household-service operations. It detects a service failure, interprets customer language, applies deterministic business rules, requests human approval when required, and coordinates customer and worker communication through email and WhatsApp.
 
